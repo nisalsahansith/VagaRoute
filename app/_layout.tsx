@@ -1,24 +1,38 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import React from "react";
+import { View, StatusBar } from "react-native";
+import { Slot } from "expo-router";
+import { useSafeAreaInsets, SafeAreaProvider } from "react-native-safe-area-context";
+import { LoaderProvider } from "@/context/LoaderContext";
+import { AuthProvider } from "@/context/authContext";
+import "../global.css";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+const RootLayout = () => {
+  const insets = useSafeAreaInsets();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    // SafeAreaProvider is required at the top level for useSafeAreaInsets to work
+    <SafeAreaProvider>
+      <LoaderProvider>
+        <AuthProvider>
+          {/* 1. Set StatusBar to dark-content to contrast with Cloud White background 
+            2. Apply global background color #F8FAFC
+          */}
+          <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+          
+          <View 
+            className="flex-1 bg-[#F8FAFC]" 
+            style={{ 
+              paddingTop: insets.top,
+              paddingBottom: insets.bottom 
+            }}
+          >
+            {/* Slot renders the active screen (Welcome, Dashboard, etc.) */}
+            <Slot />
+          </View>
+        </AuthProvider>
+      </LoaderProvider>
+    </SafeAreaProvider>
   );
-}
+};
+
+export default RootLayout;

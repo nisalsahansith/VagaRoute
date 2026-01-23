@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --primary: #1A2B48;
+        /* Midnight Voyage */
+        --secondary: #FF6D4D;
+        /* Horizon Orange */
+        --background: #F8FAFC;
+        /* Cloud White */
+        --muted: #94A3B8;
+        /* Dusty Blue */
+        --text-main: #334155;
+        /* Slate Grey */
+    }
+}
