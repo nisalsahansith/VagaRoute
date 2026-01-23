@@ -18,7 +18,7 @@ const Index = () => {
 
   // If user is logged in, send to Dashboard. 
   // If not, send to the Welcome branding page.
-  return user ? <Redirect href="/(tabs)/home" /> : <Redirect href="/welcome" />;
+  return user ? <Redirect href="/(dashboard)/home" /> : <Redirect href="/welcome" />;
 };
 
 export default Index;
