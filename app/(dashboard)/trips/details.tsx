@@ -5,8 +5,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
-  ScrollView,
-  Linking
+  ScrollView
 } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { db } from "@/services/firebase"
@@ -53,20 +52,27 @@ export default function TripDetailsScreen() {
     ])
   }
 
-  // ---------------- MAP OPEN ----------------
-  const openMap = (location: string) => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      location
-    )}`
-    Linking.openURL(url)
-  }
-
   // ---------------- EDIT ----------------
   const editTrip = () => {
     router.push({
       pathname: "/trips/create",
+      params: { tripId: trip.id }
+    })
+  }
+
+  // ---------------- NAVIGATE FULL TRIP ----------------
+  const startTripNavigation = () => {
+    const routePoints = [
+      trip.startPoint,
+      ...(trip.stops || []),
+      trip.endPoint
+    ]
+
+    router.push({
+      pathname: "/(dashboard)/(tabs)/nearby",
       params: {
-        tripId: trip.id
+        route: JSON.stringify(routePoints),
+        tripTitle: trip.title
       }
     })
   }
@@ -103,10 +109,7 @@ export default function TripDetailsScreen() {
     value: string
     isLast?: boolean
   }) => (
-    <TouchableOpacity
-      onPress={() => openMap(value)}
-      className="flex-row items-start mb-4"
-    >
+    <View className="flex-row items-start mb-4">
       <View className="items-center mr-4">
         <View className="w-3 h-3 bg-[#FF6D4D] rounded-full mt-1" />
         {!isLast && (
@@ -120,9 +123,7 @@ export default function TripDetailsScreen() {
           {value}
         </Text>
       </View>
-
-      <Ionicons name="map-outline" size={18} color="#94A3B8" />
-    </TouchableOpacity>
+    </View>
   )
 
   return (
@@ -152,12 +153,20 @@ export default function TripDetailsScreen() {
         </Text>
       </View>
 
-      {/* ROUTE TRACKER */}
-      <View className="bg-white p-5 rounded-3xl border border-[#E2E8F0] mb-8">
-        <Text className="font-bold text-[#1A2B48] mb-4">
+      {/* ROUTE TIMELINE HEADER */}
+      <View className="flex-row justify-between items-center mb-3">
+        <Text className="font-bold text-[#1A2B48] text-lg">
           Route Timeline
         </Text>
 
+        {/* FULL TRIP NAVIGATION BUTTON */}
+        <TouchableOpacity onPress={startTripNavigation}>
+          <Ionicons name="map" size={26} color="#FF6D4D" />
+        </TouchableOpacity>
+      </View>
+
+      {/* ROUTE TRACKER */}
+      <View className="bg-white p-5 rounded-3xl border border-[#E2E8F0] mb-8">
         <RouteItem label="Start Point" value={trip.startPoint} />
 
         {trip.stops?.map((stop: string, index: number) => (
