@@ -156,7 +156,7 @@ export default function TripDetailsScreen() {
       {/* ROUTE TIMELINE HEADER */}
       <View className="flex-row justify-between items-center mb-3">
         <Text className="font-bold text-[#1A2B48] text-lg">
-          Route Timeline
+          Route
         </Text>
 
         {/* FULL TRIP NAVIGATION BUTTON */}
@@ -193,15 +193,28 @@ export default function TripDetailsScreen() {
           <Text className="text-white font-bold">Edit Trip</Text>
         </TouchableOpacity>
 
-        {isUpcoming && (
-          <TouchableOpacity
-            onPress={deleteTrip}
-            className="flex-1 bg-red-500 p-4 rounded-2xl items-center"
+        <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/(dashboard)/activities/activities",
+                params: { tripId: trip.id, tripTitle: trip.title }
+              })
+            }
+            className="flex-1 bg-[#FF6D4D] p-4 rounded-2xl items-center"
           >
-            <Text className="text-white font-bold">Delete</Text>
+            <Text className="text-white font-bold">Activities</Text>
           </TouchableOpacity>
-        )}
-      </View>
+
+          {isUpcoming && (
+            <TouchableOpacity
+              onPress={deleteTrip}
+              className="flex-1 bg-red-500 p-4 rounded-2xl items-center"
+            >
+              <Text className="text-white font-bold">Delete</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
     </ScrollView>
   )
 }

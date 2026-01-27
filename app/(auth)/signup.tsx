@@ -39,7 +39,8 @@ const SignupPage = () => {
         displayName: name,
         email: email,
         createdAt: new Date().toISOString(),
-        role: 'traveler' // Default role
+        role: 'traveler', // Default role
+        photoURL:""
       });
 
       hideLoader();

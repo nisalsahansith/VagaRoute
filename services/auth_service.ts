@@ -17,10 +17,11 @@ export const register = async (
         displayName: name,
         photoURL:""
     })
-    setDoc(doc(db, "users", userCred.user.uid), {
+    await setDoc(doc(db, "users", userCred.user.uid), {
         name,
         role: "",
         email,
+        photoURL:"",    
         createdAt: new Date()
     })
     return userCred.user
