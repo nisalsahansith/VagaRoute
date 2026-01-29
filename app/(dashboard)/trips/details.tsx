@@ -127,7 +127,9 @@ export default function TripDetailsScreen() {
   )
 
   return (
-    <ScrollView className="flex-1 bg-[#F8FAFC] px-5 pt-14">
+    <ScrollView className="flex-1 bg-[#F8FAFC] px-5 pt-14"
+    contentContainerStyle={{ paddingBottom: 120 }}
+    >
       {/* HEADER */}
       <View className="flex-row items-center mb-6 justify-between">
         <TouchableOpacity onPress={() => router.push("/(dashboard)/(tabs)/trip")}>

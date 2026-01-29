@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 //@ts-ignore
-import { initializeAuth, getReactNativePersistence } from "firebase/auth";
+import { initializeAuth, getReactNativePersistence, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -25,5 +25,6 @@ export const auth = initializeAuth(app, {
 
 // Firestore (optional)
 export const db = getFirestore(app);
+export const googleProvider = new GoogleAuthProvider();
 
 export default app;

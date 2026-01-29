@@ -17,7 +17,7 @@ export const register = async (
         displayName: name,
         photoURL:""
     })
-    await setDoc(doc(db, "users", userCred.user.uid), {
+    await setDoc(doc(db, "Users", userCred.user.uid), {
         name,
         role: "",
         email,

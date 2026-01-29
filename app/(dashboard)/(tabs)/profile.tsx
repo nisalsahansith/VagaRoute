@@ -24,13 +24,14 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [tripCount, setTripCount] = useState(0)
+  
 
   // ---------------- LOAD USER DATA ----------------
   const loadUserData = async () => {
     try {
       if (!user) return
 
-      const userRef = doc(db, "users", user.uid)
+      const userRef = doc(db, "Users", user.uid)
       const snapshot = await getDoc(userRef)
 
       if (snapshot.exists()) {
@@ -128,7 +129,7 @@ export default function ProfileScreen() {
       const imageUrl = await uploadToCloudinary(uri)
 
       await setDoc(
-      doc(db, "users", user.uid),
+      doc(db, "Users", user.uid),
       {
         photoURL: imageUrl,
         updatedAt: serverTimestamp(),
@@ -192,7 +193,7 @@ export default function ProfileScreen() {
 
       {/* Name & Username */}
       <Text className="text-2xl font-bold text-[#1A2B48]">
-        {userData?.name || "Traveler"}
+        {userData?.displayName || "Traveler"}
       </Text>
       <Text className="text-[#94A3B8] mb-8">
         {userData?.username || user?.email}
@@ -209,7 +210,10 @@ export default function ProfileScreen() {
       </View>
 
       {/* Buttons */}
-      <TouchableOpacity className="w-full flex-row items-center bg-white p-5 rounded-2xl mb-4 border border-[#E2E8F0]">
+      <TouchableOpacity
+        onPress={() => router.push("/(dashboard)/setting")}
+        className="w-full flex-row items-center bg-white p-5 rounded-2xl mb-4 border border-[#E2E8F0]"
+      >
         <Ionicons name="settings-outline" size={20} color="#1A2B48" />
         <Text className="ml-4 font-bold text-[#1A2B48]">
           Account Settings

@@ -1,22 +1,26 @@
-import React from "react";
-import { View, StatusBar } from "react-native";
+import React, { useEffect } from "react";
+import { View, StatusBar, Platform } from "react-native";
 import { Slot } from "expo-router";
 import { useSafeAreaInsets, SafeAreaProvider } from "react-native-safe-area-context";
 import { LoaderProvider } from "@/context/LoaderContext";
 import { AuthProvider } from "@/context/authContext";
+import * as NavigationBar from "expo-navigation-bar"; 
 import "../global.css";
 
 const RootLayout = () => {
   const insets = useSafeAreaInsets();
 
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      NavigationBar.setButtonStyleAsync("dark");
+    }
+  }, []);
+
   return (
-    // SafeAreaProvider is required at the top level for useSafeAreaInsets to work
     <SafeAreaProvider>
       <LoaderProvider>
         <AuthProvider>
-          {/* 1. Set StatusBar to dark-content to contrast with Cloud White background 
-            2. Apply global background color #F8FAFC
-          */}
+          {/* Status bar for top of the screen */}
           <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
           
           <View 
@@ -26,7 +30,6 @@ const RootLayout = () => {
               paddingBottom: insets.bottom 
             }}
           >
-            {/* Slot renders the active screen (Welcome, Dashboard, etc.) */}
             <Slot />
           </View>
         </AuthProvider>
