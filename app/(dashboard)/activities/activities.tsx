@@ -215,6 +215,7 @@ export default function ActivitiesScreen() {
           {/* Title */}
           <TextInput
             placeholder="Title (Flight, Hotel, Dinner...)"
+            placeholderTextColor="#94A3B8"
             value={title}
             onChangeText={setTitle}
             className="bg-white p-4 rounded-2xl mb-4 border border-[#E2E8F0]"
@@ -223,6 +224,7 @@ export default function ActivitiesScreen() {
           {/* Type */}
           <TextInput
             placeholder="Type (flight, hotel, restaurant, custom)"
+            placeholderTextColor="#94A3B8"
             value={type}
             onChangeText={t => setType(t as any)}
             className="bg-white p-4 rounded-2xl mb-4 border border-[#E2E8F0]"
@@ -298,6 +300,7 @@ export default function ActivitiesScreen() {
           {/* Location */}
           <TextInput
             placeholder="Location"
+            placeholderTextColor="#94A3B8"
             value={location}
             onChangeText={setLocation}
             className="bg-white p-4 rounded-2xl mb-4 border border-[#E2E8F0]"
@@ -306,6 +309,7 @@ export default function ActivitiesScreen() {
           {/* Notes */}
           <TextInput
             placeholder="Notes"
+            placeholderTextColor="#94A3B8"
             value={notes}
             onChangeText={setNotes}
             multiline

@@ -175,6 +175,7 @@ export default function CreateTripScreen() {
             <Text className="font-semibold mb-2 mt-4">Trip Title*</Text>
             <TextInput
               placeholder="Ella Adventure"
+              placeholderTextColor="#94A3B8"
               className="bg-white p-4 rounded-2xl border border-[#E2E8F0]"
               value={title}
               onChangeText={setTitle}

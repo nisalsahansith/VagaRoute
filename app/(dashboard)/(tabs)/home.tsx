@@ -152,6 +152,7 @@ export default function HomeScreen() {
 
         <TextInput
           placeholder="Search your trips..."
+          placeholderTextColor="#94A3B8"
           value={search}
           onChangeText={setSearch}
           editable={!loadingTrips}

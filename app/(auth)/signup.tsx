@@ -96,6 +96,7 @@ const SignupPage = () => {
               <Text className="text-[#1A2B48] font-semibold mb-2 ml-1">Full Name</Text>
               <TextInput
                 placeholder="John Doe"
+                placeholderTextColor="#94A3B8"
                 className="bg-white border border-[#E2E8F0] p-4 rounded-2xl text-[#1A2B48]"
                 value={name}
                 onChangeText={setName}
@@ -106,6 +107,7 @@ const SignupPage = () => {
               <Text className="text-[#1A2B48] font-semibold mb-2 ml-1">Email Address</Text>
               <TextInput
                 placeholder="name@example.com"
+                placeholderTextColor="#94A3B8"
                 className="bg-white border border-[#E2E8F0] p-4 rounded-2xl text-[#1A2B48]"
                 value={email}
                 onChangeText={setEmail}
@@ -118,6 +120,7 @@ const SignupPage = () => {
               <Text className="text-[#1A2B48] font-semibold mb-2 ml-1">Password</Text>
               <TextInput
                 placeholder="Min. 8 characters"
+                placeholderTextColor="#94A3B8"
                 secureTextEntry
                 className="bg-white border border-[#E2E8F0] p-4 rounded-2xl text-[#1A2B48]"
                 value={password}

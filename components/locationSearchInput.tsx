@@ -56,6 +56,7 @@ export default function LocationSearchInput({
         value={query}
         onChangeText={setQuery}
         placeholder={placeholder}
+        placeholderTextColor="#94A3B8"
         className="bg-white p-4 rounded-2xl border border-[#E2E8F0]"
       />
 

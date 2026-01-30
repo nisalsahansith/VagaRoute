@@ -178,6 +178,7 @@ export default function SettingsScreen() {
 
         <TextInput
           placeholder="Enter new name"
+          placeholderTextColor="#94A3B8"
           value={name}
           onChangeText={setName}
           className="bg-[#F8FAFC] p-4 rounded-2xl mb-4 border border-[#E2E8F0]"
@@ -204,6 +205,7 @@ export default function SettingsScreen() {
 
         <TextInput
           placeholder="Current Password"
+          placeholderTextColor="#94A3B8"
           secureTextEntry
           value={currentPassword}
           onChangeText={setCurrentPassword}
@@ -212,6 +214,7 @@ export default function SettingsScreen() {
 
         <TextInput
           placeholder="New Password"
+          placeholderTextColor="#94A3B8"
           secureTextEntry
           value={newPassword}
           onChangeText={setNewPassword}

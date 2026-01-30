@@ -14,12 +14,24 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/vagaRoute_logo.png",
+        "backgroundImage": "./assets/images/vagaRoute_logo.png",
+        "monochromeImage": "./assets/images/vagaRoute_logo.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.nisalsahan.VagaRoute",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBVH-_aQYd15yrDcoyUXYhiRBaAJH0XiTM"
+        }
+      }
     },
     "web": {
       "output": "static",
@@ -40,11 +52,27 @@
         }
       ],
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f0017fd2-9cf7-4d66-af1a-fdc0d04ae30c"
+      }
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/f0017fd2-9cf7-4d66-af1a-fdc0d04ae30c"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }

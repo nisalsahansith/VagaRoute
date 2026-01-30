@@ -162,6 +162,7 @@ const LoginPage = () => {
           {/* Email */}
           <TextInput
             placeholder="Email"
+            placeholderTextColor="#94A3B8"
             className="bg-white border border-[#E2E8F0] p-4 rounded-2xl mb-4"
             value={email}
             onChangeText={setEmail}
@@ -172,6 +173,7 @@ const LoginPage = () => {
           <TextInput
             placeholder="Password"
             secureTextEntry
+            placeholderTextColor="#94A3B8"
             className="bg-white border border-[#E2E8F0] p-4 rounded-2xl"
             value={password}
             onChangeText={setPassword}
