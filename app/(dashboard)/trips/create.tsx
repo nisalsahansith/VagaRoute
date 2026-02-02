@@ -8,7 +8,8 @@ import {
   Platform,
   Alert,
   TextInput,
-  ActivityIndicator
+  ActivityIndicator,
+  StatusBar
 } from "react-native"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
@@ -44,14 +45,12 @@ export default function CreateTripScreen() {
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(false)
 
-  // ---------------- LOAD TRIP FOR EDIT ----------------
   const loadTrip = async () => {
     if (!tripId) return
     try {
       setInitialLoading(true)
       const tripRef = doc(db, "trips", tripId as string)
       const snapshot = await getDoc(tripRef)
-
       if (snapshot.exists()) {
         const data = snapshot.data()
         setTitle(data.title)
@@ -72,25 +71,22 @@ export default function CreateTripScreen() {
     if (isEditMode) loadTrip()
   }, [tripId])
 
-  // ---------------- ADD / REMOVE STOP ----------------
   const addStop = () => {
     if (!newStop.trim()) return
     setStops(prev => [...prev, newStop.trim()])
-    setNewStop("") // clear input after adding
-    setStopInputKey(prev => prev + 1) // force LocationSearchInput reset
+    setNewStop("")
+    setStopInputKey(prev => prev + 1)
   }
 
   const removeStop = (index: number) => {
     setStops(prev => prev.filter((_, i) => i !== index))
   }
 
-  // ---------------- SAVE / UPDATE TRIP ----------------
   const saveTrip = async () => {
     if (!title || !startPoint || !endPoint || !startDate || !endDate) {
       Alert.alert("Error", "Please fill all required fields")
       return
     }
-
     try {
       setLoading(true)
       const payload = {
@@ -108,12 +104,9 @@ export default function CreateTripScreen() {
       if (isEditMode) {
         const ref = doc(db, "trips", tripId as string)
         await updateDoc(ref, payload)
-        Alert.alert("Updated", "Trip updated successfully")
       } else {
         await addDoc(collection(db, "trips"), { ...payload, createdAt: new Date().toISOString() })
-        Alert.alert("Success", "Trip created successfully")
       }
-
       router.push("/(dashboard)/(tabs)/trip")
     } catch (err) {
       Alert.alert("Error", "Failed to save trip")
@@ -122,9 +115,8 @@ export default function CreateTripScreen() {
     }
   }
 
-  // ---------------- DELETE TRIP ----------------
   const deleteTrip = async () => {
-    Alert.alert("Delete Trip", "Are you sure?", [
+    Alert.alert("Delete Trip", "This action cannot be undone.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
@@ -137,7 +129,6 @@ export default function CreateTripScreen() {
     ])
   }
 
-  // ---------------- LOADER ----------------
   if (initialLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-[#F8FAFC]">
@@ -146,146 +137,141 @@ export default function CreateTripScreen() {
     )
   }
 
-  // ---------------- UI ----------------
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       className="flex-1 bg-[#F8FAFC]"
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
+      <StatusBar barStyle="dark-content" />
       <FlatList
         data={stops}
         keyExtractor={(_, i) => i.toString()}
         keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: 40 }}
         ListHeaderComponent={
-          <View className="px-5 pt-14">
+          <View className="px-6 pt-14">
             {/* HEADER */}
-            <View className="flex-row items-center mb-6 justify-between">
-              <TouchableOpacity onPress={() => router.push("/(dashboard)/(tabs)/trip")}>
-                <Ionicons name="arrow-back" size={26} color="#1A2B48" />
+            <View className="flex-row items-center mb-8">
+              <TouchableOpacity 
+                onPress={() => router.push("/(dashboard)/(tabs)/trip")} 
+                className="w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm"
+              >
+                <Ionicons name="chevron-back" size={24} color="#1A2B48" />
               </TouchableOpacity>
-
-              <Text className="text-2xl font-bold text-[#1A2B48]">
-                {isEditMode ? "Edit Trip" : "Create Trip"}
+              <Text className="text-2xl font-black text-[#1A2B48] ml-4">
+                {isEditMode ? "Edit Trip" : "New Journey"}
               </Text>
-
-              <View className="w-6" />
             </View>
 
-            {/* TITLE */}
-            <Text className="font-semibold mb-2 mt-4">Trip Title*</Text>
-            <TextInput
-              placeholder="Ella Adventure"
-              placeholderTextColor="#94A3B8"
-              className="bg-white p-4 rounded-2xl border border-[#E2E8F0]"
-              value={title}
-              onChangeText={setTitle}
-            />
-
-            {/* START POINT */}
-            <Text className="font-semibold mb-2 mt-4">Start Point*</Text>
-            <LocationSearchInput
-              placeholder="Search start location"
-              value={startPoint}
-              onSelect={setStartPoint}
-            />
-
-            {/* END POINT */}
-            <Text className="font-semibold mb-2 mt-4">End Point*</Text>
-            <LocationSearchInput
-              placeholder="Search destination"
-              value={endPoint}
-              onSelect={setEndPoint}
-            />
-
-            {/* DATES */}
-            <View className="flex-row gap-3 mb-4 mt-4">
-              <View className="flex-1">
-                <Text className="font-semibold mb-2">Start Date*</Text>
-                <TouchableOpacity
-                  onPress={() => setShowStartPicker(true)}
-                  className="bg-white p-4 rounded-2xl border border-[#E2E8F0]"
-                >
-                  <Text>{startDate ? startDate.toDateString() : "Select date"}</Text>
-                </TouchableOpacity>
-
-                {showStartPicker && (
-                  <DateTimePicker
-                    value={startDate || new Date()}
-                    mode="date"
-                    display="default"
-                    onChange={(e, date) => {
-                      setShowStartPicker(false)
-                      if (date) setStartDate(date)
-                    }}
-                  />
-                )}
-              </View>
-
-              <View className="flex-1">
-                <Text className="font-semibold mb-2">End Date*</Text>
-                <TouchableOpacity
-                  onPress={() => setShowEndPicker(true)}
-                  className="bg-white p-4 rounded-2xl border border-[#E2E8F0]"
-                >
-                  <Text>{endDate ? endDate.toDateString() : "Select date"}</Text>
-                </TouchableOpacity>
-
-                {showEndPicker && (
-                  <DateTimePicker
-                    value={endDate || new Date()}
-                    mode="date"
-                    display="default"
-                    onChange={(e, date) => {
-                      setShowEndPicker(false)
-                      if (date) setEndDate(date)
-                    }}
-                  />
-                )}
-              </View>
-            </View>
-
-            {/* STOPS */}
-            <Text className="font-semibold mb-2">Stops</Text>
-            <View className="flex-row gap-2 mb-3">
-              <View className="flex-1">
-                <LocationSearchInput
-                  key={stopInputKey} // force reset after adding
-                  placeholder="Add stop"
-                  value={newStop}
-                //   onChangeText={setNewStop} // controlled input
-                  onSelect={setNewStop}
+            {/* FORM FIELDS */}
+            <View className="space-y-5">
+              <View>
+                <Text className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest mb-2 ml-1">Trip Title</Text>
+                <TextInput
+                  placeholder="e.g. Summer in Ella"
+                  placeholderTextColor="#CBD5E1"
+                  className="bg-white p-4 rounded-2xl border border-gray-100 font-bold text-[#1A2B48]"
+                  value={title}
+                  onChangeText={setTitle}
                 />
               </View>
 
-              <TouchableOpacity
-                onPress={addStop}
-                className="bg-[#FF6D4D] w-12 h-12 rounded-2xl items-center justify-center"
-              >
-                <Ionicons name="add" size={24} color="white" />
-              </TouchableOpacity>
+              <View>
+                <Text className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest mb-2 ml-1">Start Point</Text>
+                <LocationSearchInput
+                  placeholder="Where are you starting?"
+                  value={startPoint}
+                  onSelect={setStartPoint}
+                />
+              </View>
+
+              <View>
+                <Text className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest mb-2 ml-1">End Point</Text>
+                <LocationSearchInput
+                  placeholder="Your destination"
+                  value={endPoint}
+                  onSelect={setEndPoint}
+                />
+              </View>
+
+              {/* DATES */}
+              <View className="flex-row gap-4">
+                <View className="flex-1">
+                  <Text className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest mb-2 ml-1">Start Date</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowStartPicker(true)}
+                    className="bg-white p-4 rounded-2xl border border-gray-100 flex-row items-center"
+                  >
+                    <Ionicons name="calendar-outline" size={16} color="#FF6D4D" />
+                    <Text className="ml-2 font-bold text-[#1A2B48]">
+                      {startDate ? startDate.toLocaleDateString() : "Select"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View className="flex-1">
+                  <Text className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest mb-2 ml-1">End Date</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowEndPicker(true)}
+                    className="bg-white p-4 rounded-2xl border border-gray-100 flex-row items-center"
+                  >
+                    <Ionicons name="calendar-outline" size={16} color="#FF6D4D" />
+                    <Text className="ml-2 font-bold text-[#1A2B48]">
+                      {endDate ? endDate.toLocaleDateString() : "Select"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* STOPS INPUT */}
+              <View>
+                <Text className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest mb-2 ml-1">Waypoints (Optional)</Text>
+                <View className="flex-row gap-2">
+                  <View className="flex-1">
+                    <LocationSearchInput
+                      key={stopInputKey}
+                      placeholder="Add a stop along the way"
+                      value={newStop}
+                      onSelect={setNewStop}
+                    />
+                  </View>
+                  <TouchableOpacity
+                    onPress={addStop}
+                    className="bg-[#FF6D4D] w-14 h-14 rounded-2xl items-center justify-center shadow-lg shadow-orange-500/30"
+                  >
+                    <Ionicons name="add" size={28} color="white" />
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
+
+            <Text className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest mt-6 mb-2 ml-1">Your Route</Text>
           </View>
         }
         renderItem={({ item, index }) => (
-          <View className="bg-white p-3 rounded-xl mb-2 mx-5 border border-[#E2E8F0] flex-row justify-between items-center">
-            <Text>{item}</Text>
+          <View className="bg-white p-4 rounded-2xl mb-2 mx-6 border border-gray-50 flex-row justify-between items-center shadow-sm">
+            <View className="flex-row items-center">
+              <View className="w-2 h-2 rounded-full bg-[#FF6D4D] mr-3" />
+              <Text className="font-bold text-[#1A2B48]">{item}</Text>
+            </View>
             <TouchableOpacity onPress={() => removeStop(index)}>
-              <Ionicons name="close-circle" size={20} color="#FF6D4D" />
+              <Ionicons name="trash-outline" size={18} color="#CBD5E1" />
             </TouchableOpacity>
           </View>
         )}
         ListFooterComponent={
-          <View className="mx-5 mt-6 mb-12">
+          <View className="px-6 mt-8 space-y-3">
             <TouchableOpacity
               onPress={saveTrip}
               disabled={loading}
-              className="bg-[#1A2B48] p-5 rounded-2xl items-center"
+              className="bg-[#1A2B48] p-5 rounded-[22px] items-center shadow-xl shadow-slate-900/20"
             >
               {loading ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text className="text-white font-bold text-lg">
-                  {isEditMode ? "Update Trip" : "Save Trip"}
+                <Text className="text-white font-black text-lg">
+                  {isEditMode ? "Update Itinerary" : "Create Adventure"}
                 </Text>
               )}
             </TouchableOpacity>
@@ -293,14 +279,37 @@ export default function CreateTripScreen() {
             {isEditMode && (
               <TouchableOpacity
                 onPress={deleteTrip}
-                className="bg-red-500 p-4 rounded-2xl items-center mt-4"
+                className="p-4 items-center"
               >
-                <Text className="text-white font-bold">Delete Trip</Text>
+                <Text className="text-red-500 font-bold">Cancel Trip</Text>
               </TouchableOpacity>
             )}
           </View>
         }
       />
+
+      {showStartPicker && (
+        <DateTimePicker
+          value={startDate || new Date()}
+          mode="date"
+          display="default"
+          onChange={(e, date) => {
+            setShowStartPicker(false)
+            if (date) setStartDate(date)
+          }}
+        />
+      )}
+      {showEndPicker && (
+        <DateTimePicker
+          value={endDate || new Date()}
+          mode="date"
+          display="default"
+          onChange={(e, date) => {
+            setShowEndPicker(false)
+            if (date) setEndDate(date)
+          }}
+        />
+      )}
     </KeyboardAvoidingView>
   )
 }

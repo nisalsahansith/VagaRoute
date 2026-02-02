@@ -5,7 +5,10 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
@@ -24,22 +27,20 @@ export default function SettingsScreen() {
   const [name, setName] = useState("")
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew] = useState(false)
 
   const [loadingName, setLoadingName] = useState(false)
   const [loadingPassword, setLoadingPassword] = useState(false)
   const [loadingUser, setLoadingUser] = useState(true)
 
-  // ---------------- LOAD CURRENT USER DATA ----------------
   const loadUserData = async () => {
     try {
       if (!user) return
       const userRef = doc(db, "Users", user.uid)
       const snapshot = await getDoc(userRef)
-
-        if (snapshot.exists()) {
-        const data = snapshot.data()
-            setName(data.displayName)
-
+      if (snapshot.exists()) {
+        setName(snapshot.data().displayName || "")
       }
     } catch (err) {
       console.log("Error loading user data", err)
@@ -52,103 +53,39 @@ export default function SettingsScreen() {
     loadUserData()
   }, [])
 
-  // ---------------- CHANGE NAME ----------------
   const handleChangeName = async () => {
-    if (!name.trim()) {
-      Alert.alert("Error", "Name cannot be empty")
-      return
-    }
-
+    if (!name.trim()) return Alert.alert("Error", "Name cannot be empty")
     try {
       if (!user) return
       setLoadingName(true)
-
-      await setDoc(
-        doc(db, "Users", user.uid),
-        {
-          displayName: name.trim(),
-          updatedAt: serverTimestamp()
-        },
-        { merge: true }
-      )
-
-      Alert.alert("Success", "Name updated successfully")
+      await setDoc(doc(db, "Users", user.uid), { displayName: name.trim(), updatedAt: serverTimestamp() }, { merge: true })
+      Alert.alert("Success", "Profile name updated!")
     } catch (err) {
-      console.log("Name update error", err)
       Alert.alert("Error", "Could not update name")
     } finally {
       setLoadingName(false)
     }
   }
 
-  // ---------------- CHANGE PASSWORD ----------------
   const handleChangePassword = async () => {
-    if (!currentPassword || !newPassword) {
-      Alert.alert("Error", "Fill in both password fields")
-      return
-    }
-
-    if (newPassword.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters")
-      return
-    }
+    if (!currentPassword || !newPassword) return Alert.alert("Error", "Please fill in all fields")
+    if (newPassword.length < 6) return Alert.alert("Error", "New password is too short")
 
     try {
       if (!user || !user.email) return
       setLoadingPassword(true)
-
-      const credential = EmailAuthProvider.credential(
-        user.email,
-        currentPassword
-      )
-
+      const credential = EmailAuthProvider.credential(user.email, currentPassword)
       await reauthenticateWithCredential(user, credential)
       await updatePassword(user, newPassword)
-
-      Alert.alert("Success", "Password updated successfully")
-      setCurrentPassword("")
-      setNewPassword("")
+      Alert.alert("Success", "Security settings updated")
+      setCurrentPassword(""); setNewPassword("")
     } catch (err: any) {
-      console.log("Password error", err)
-
-      if (err.code === "auth/wrong-password") {
-        Alert.alert("Error", "Current password is incorrect")
-      } else {
-        Alert.alert("Error", "Could not update password")
-      }
+      Alert.alert("Security Error", err.code === "auth/wrong-password" ? "Incorrect current password" : "Update failed")
     } finally {
       setLoadingPassword(false)
     }
   }
 
-  // ---------------- DELETE ACCOUNT ----------------
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      "Delete Account",
-      "This action is permanent. Are you sure?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              if (!user) return
-              await user.delete()
-              router.replace("/(auth)/login")
-            } catch (err) {
-              Alert.alert(
-                "Reauthentication Required",
-                "Please log in again before deleting your account."
-              )
-            }
-          }
-        }
-      ]
-    )
-  }
-
-  // ---------------- LOADING ----------------
   if (loadingUser) {
     return (
       <View className="flex-1 justify-center items-center bg-[#F8FAFC]">
@@ -158,100 +95,105 @@ export default function SettingsScreen() {
   }
 
   return (
-    <View className="flex-1 bg-[#F8FAFC] pt-20 px-5">
-      {/* HEADER */}
-      <View className="flex-row items-center mb-8">
-        <TouchableOpacity onPress={() => router.push("/(dashboard)/(tabs)/profile")} className="mr-4">
-          <Ionicons name="arrow-back" size={24} color="#1A2B48" />
-        </TouchableOpacity>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      className="flex-1 bg-[#F8FAFC]"
+    >
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 60 }}>
+        {/* HEADER */}
+        <View className="pt-16 px-6 pb-6 bg-white rounded-b-[40px] shadow-sm shadow-black/5 flex-row items-center">
+          <TouchableOpacity onPress={() => router.push("/(dashboard)/(tabs)/profile")} className="bg-[#F8FAFC] p-2 rounded-xl border border-[#F1F5F9]">
+            <Ionicons name="chevron-back" size={24} color="#1A2B48" />
+          </TouchableOpacity>
+          <Text className="ml-4 text-2xl font-black text-[#1A2B48]">Settings</Text>
+        </View>
 
-        <Text className="text-2xl font-bold text-[#1A2B48]">
-          Settings
-        </Text>
-      </View>
+        <View className="p-6">
+          {/* PERSONAL INFO SECTION */}
+          <Text className="text-[10px] font-black text-[#94A3B8] uppercase tracking-[2px] mb-4 ml-2">Personal Information</Text>
+          <View className="bg-white p-6 rounded-[32px] border border-[#F1F5F9] mb-8 shadow-sm shadow-black/5">
+            <View className="mb-4">
+              <Text className="text-xs font-bold text-[#64748B] mb-2 ml-1">Display Name</Text>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                className="bg-[#F8FAFC] p-4 rounded-2xl border border-[#E2E8F0] font-semibold text-[#1A2B48]"
+              />
+            </View>
+            <View>
+              <Text className="text-xs font-bold text-[#64748B] mb-2 ml-1">Email Address</Text>
+              <TextInput
+                value={user?.email || ""}
+                editable={false}
+                className="bg-[#F1F5F9] p-4 rounded-2xl border border-[#E2E8F0] text-[#94A3B8] font-medium"
+              />
+            </View>
+            <TouchableOpacity
+              onPress={handleChangeName}
+              disabled={loadingName}
+              className="bg-[#1A2B48] p-4 rounded-2xl items-center mt-6"
+            >
+              {loadingName ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold">Update Profile</Text>}
+            </TouchableOpacity>
+          </View>
 
-      {/* CHANGE NAME */}
-      <View className="bg-white p-6 rounded-3xl border border-[#E2E8F0] mb-6">
-        <Text className="text-lg font-bold text-[#1A2B48] mb-4">
-          Change Name
-        </Text>
+          {/* SECURITY SECTION */}
+          <Text className="text-[10px] font-black text-[#94A3B8] uppercase tracking-[2px] mb-4 ml-2">Security</Text>
+          <View className="bg-white p-6 rounded-[32px] border border-[#F1F5F9] mb-8 shadow-sm shadow-black/5">
+            <View className="mb-4">
+              <Text className="text-xs font-bold text-[#64748B] mb-2 ml-1">Current Password</Text>
+              <View className="flex-row items-center bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] px-4">
+                <TextInput
+                  secureTextEntry={!showCurrent}
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  className="flex-1 py-4 font-semibold text-[#1A2B48]"
+                />
+                <TouchableOpacity onPress={() => setShowCurrent(!showCurrent)}>
+                  <Ionicons name={showCurrent ? "eye-off" : "eye"} size={20} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+            </View>
 
-        <TextInput
-          placeholder="Enter new name"
-          placeholderTextColor="#94A3B8"
-          value={name}
-          onChangeText={setName}
-          className="bg-[#F8FAFC] p-4 rounded-2xl mb-4 border border-[#E2E8F0]"
-        />
+            <View className="mb-6">
+              <Text className="text-xs font-bold text-[#64748B] mb-2 ml-1">New Password</Text>
+              <View className="flex-row items-center bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] px-4">
+                <TextInput
+                  secureTextEntry={!showNew}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  className="flex-1 py-4 font-semibold text-[#1A2B48]"
+                />
+                <TouchableOpacity onPress={() => setShowNew(!showNew)}>
+                  <Ionicons name={showNew ? "eye-off" : "eye"} size={20} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+            </View>
 
-        <TouchableOpacity
-          onPress={handleChangeName}
-          disabled={loadingName}
-          className="bg-[#FF6D4D] p-4 rounded-2xl items-center"
-        >
-          {loadingName ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white font-bold">Save Name</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity
+              onPress={handleChangePassword}
+              disabled={loadingPassword}
+              className="bg-[#FF6D4D] p-4 rounded-2xl items-center"
+            >
+              {loadingPassword ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold">Change Password</Text>}
+            </TouchableOpacity>
+          </View>
 
-      {/* CHANGE PASSWORD */}
-      <View className="bg-white p-6 rounded-3xl border border-[#E2E8F0] mb-6">
-        <Text className="text-lg font-bold text-[#1A2B48] mb-4">
-          Change Password
-        </Text>
-
-        <TextInput
-          placeholder="Current Password"
-          placeholderTextColor="#94A3B8"
-          secureTextEntry
-          value={currentPassword}
-          onChangeText={setCurrentPassword}
-          className="bg-[#F8FAFC] p-4 rounded-2xl mb-3 border border-[#E2E8F0]"
-        />
-
-        <TextInput
-          placeholder="New Password"
-          placeholderTextColor="#94A3B8"
-          secureTextEntry
-          value={newPassword}
-          onChangeText={setNewPassword}
-          className="bg-[#F8FAFC] p-4 rounded-2xl mb-4 border border-[#E2E8F0]"
-        />
-
-        <TouchableOpacity
-          onPress={handleChangePassword}
-          disabled={loadingPassword}
-          className="bg-[#FF6D4D] p-4 rounded-2xl items-center"
-        >
-          {loadingPassword ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white font-bold">Update Password</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {/* ACCOUNT INFO */}
-      <View className="bg-white p-6 rounded-3xl border border-[#E2E8F0] mb-6">
-        <Text className="text-lg font-bold text-[#1A2B48] mb-2">
-          Account Info
-        </Text>
-
-        <Text className="text-[#94A3B8]">
-          Email: {user?.email}
-        </Text>
-      </View>
-
-      {/* DELETE ACCOUNT */}
-      <TouchableOpacity
-        onPress={handleDeleteAccount}
-        className="bg-red-100 p-5 rounded-2xl items-center"
-      >
-        <Text className="text-red-600 font-bold">Delete Account</Text>
-      </TouchableOpacity>
-    </View>
+          {/* DANGER ZONE */}
+          <View className="mt-4 items-center">
+            <TouchableOpacity 
+              onPress={() => Alert.alert("Delete Account", "This cannot be undone.", [
+                { text: "Cancel", style: "cancel" },
+                { text: "Delete Permanently", style: "destructive", onPress: () => user?.delete().then(() => router.replace("/(auth)/login")) }
+              ])}
+              className="flex-row items-center p-4"
+            >
+              <Ionicons name="trash-outline" size={18} color="#EF4444" />
+              <Text className="ml-2 text-[#EF4444] font-bold">Deactivate Account</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }

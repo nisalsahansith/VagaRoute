@@ -6,7 +6,8 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator
+  ActivityIndicator,
+  StatusBar
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import * as WebBrowser from "expo-web-browser"
@@ -35,22 +36,15 @@ export default function HomeScreen() {
     await WebBrowser.openBrowserAsync(url)
   }
 
-  // ---------------- LOAD TRIPS ----------------
   const loadTrips = async () => {
     try {
       if (!user) return
-
-      const q = query(
-        collection(db, "trips"),
-        where("userId", "==", user.uid)
-      )
-
+      const q = query(collection(db, "trips"), where("userId", "==", user.uid))
       const snap = await getDocs(q)
       const list: Trip[] = snap.docs.map(doc => ({
         id: doc.id,
         ...(doc.data() as any)
       }))
-
       setTrips(list)
     } catch (err) {
       console.log("Error loading trips", err)
@@ -59,62 +53,47 @@ export default function HomeScreen() {
     }
   }
 
-  useEffect(() => {
-    loadTrips()
-  }, [])
+  useEffect(() => { loadTrips() }, [])
 
-  // ---------------- FILTERED TRIPS ----------------
   const filteredTrips = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return trips
-
-    return trips.filter(t =>
-      (t.title || "").toLowerCase().includes(q)
-    )
+    return trips.filter(t => (t.title || "").toLowerCase().includes(q))
   }, [search, trips])
 
-  // ---------------- STATUS LOGIC ----------------
   const today = new Date()
+  const upcomingTrips = filteredTrips.filter(trip => new Date(trip.endDate) >= today)
+  const completedTrips = filteredTrips.filter(trip => new Date(trip.endDate) < today)
 
-  const upcomingTrips = filteredTrips.filter(trip => {
-    const end = new Date(trip.endDate)
-    return end >= today
-  })
-
-  const completedTrips = filteredTrips.filter(trip => {
-    const end = new Date(trip.endDate)
-    return end < today
-  })
-
-  // ---------------- TRIP CARD ----------------
+  // ---------------- IMPROVED TRIP CARD ----------------
   const TripCard = ({ trip }: { trip: Trip }) => {
     const isUpcoming = new Date(trip.endDate) >= today
 
     return (
       <TouchableOpacity
-        onPress={() =>
-          router.push({
-            pathname: "/trips/details",
-            params: { tripId: trip.id }
-          })
-        }
-        className="bg-white p-4 rounded-2xl border border-[#E2E8F0] mr-4 mb-4 w-56"
+        onPress={() => router.push({ pathname: "/trips/details", params: { tripId: trip.id } })}
+        activeOpacity={0.8}
+        className="bg-white p-5 rounded-[32px] mr-4 mb-2 w-64 shadow-sm shadow-black/5 border border-gray-50"
       >
-        <Text className="font-bold text-[#1A2B48] mb-1">
+        <View className={`w-10 h-10 rounded-2xl items-center justify-center mb-4 ${isUpcoming ? 'bg-[#FF6D4D]/10' : 'bg-[#10B981]/10'}`}>
+            <Ionicons 
+              name={isUpcoming ? "airplane" : "checkmark-circle"} 
+              size={20} 
+              color={isUpcoming ? "#FF6D4D" : "#10B981"} 
+            />
+        </View>
+        
+        <Text className="font-black text-[#1A2B48] text-lg mb-1" numberOfLines={1}>
           {trip.title}
         </Text>
 
-        <Text className="text-[#94A3B8] text-sm">
-          {new Date(trip.startDate).toDateString()}
+        <Text className="text-[#94A3B8] text-xs font-bold mb-4">
+          {new Date(trip.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
         </Text>
 
-        <View className="flex-row items-center mt-2">
-          <Ionicons
-            name={isUpcoming ? "time-outline" : "checkmark-circle-outline"}
-            size={16}
-            color={isUpcoming ? "#F59E0B" : "#10B981"}
-          />
-          <Text className="ml-2 text-sm text-[#64748B]">
+        <View className="flex-row items-center">
+          <View className={`w-2 h-2 rounded-full ${isUpcoming ? 'bg-[#F59E0B]' : 'bg-[#10B981]'}`} />
+          <Text className="ml-2 text-[10px] font-black uppercase tracking-tighter text-[#64748B]">
             {isUpcoming ? "Upcoming" : "Completed"}
           </Text>
         </View>
@@ -123,210 +102,142 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView
-      className="flex-1 bg-[#F8FAFC] pt-14 px-5"
-      contentContainerStyle={{ paddingBottom: 120 }}
-    >
-      {/* HEADER */}
-      <View className="flex-row justify-between items-center mb-6">
-        <View>
-          <Text className="text-[#94A3B8] font-medium">Explore</Text>
-          <Text className="text-2xl font-bold text-[#1A2B48]">
-            VagaRoute
-          </Text>
+    <View className="flex-1 bg-[#F8FAFC]">
+      <StatusBar barStyle="dark-content" />
+      
+      <ScrollView 
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: 60, paddingBottom: 120 }}
+      >
+        {/* HEADER */}
+        <View className="flex-row justify-between items-center mb-8">
+          <View>
+            <Text className="text-[#94A3B8] font-bold uppercase tracking-[2px] text-[10px] mb-1">Explore</Text>
+            <Text className="text-3xl font-black text-[#1A2B48]">VagaRoute</Text>
+          </View>
+          <View className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+            <Image
+              source={require("@/assets/images/vagaRoute_logo.png")}
+              className="w-10 h-10 rounded-xl"
+              resizeMode="contain"
+            />
+          </View>
         </View>
 
-        <View className="bg-white p-2 rounded-2xl shadow-sm border border-[#E2E8F0]">
-          <Image
-            source={require("@/assets/images/vagaRoute_logo.png")}
-            className="w-16 h-16 rounded-xl"
-            resizeMode="contain"
+        {/* SEARCH BAR (MINIMAL) */}
+        <View className="flex-row items-center bg-white h-14 px-5 rounded-2xl shadow-sm border border-gray-50 mb-8">
+          <Ionicons name="search" size={20} color="#CBD5E1" />
+          <TextInput
+            placeholder="Search adventures..."
+            placeholderTextColor="#CBD5E1"
+            value={search}
+            onChangeText={setSearch}
+            editable={!loadingTrips}
+            className="flex-1 ml-3 font-semibold text-[#1A2B48]"
           />
-        </View>
-
-      </View>
-
-      {/* SEARCH BAR */}
-      <View className="flex-row items-center bg-white p-4 rounded-2xl shadow-sm border border-[#E2E8F0] mb-6">
-        <Ionicons name="search" size={20} color="#94A3B8" />
-
-        <TextInput
-          placeholder="Search your trips..."
-          placeholderTextColor="#94A3B8"
-          value={search}
-          onChangeText={setSearch}
-          editable={!loadingTrips}
-          className="flex-1 ml-3 text-[#1A2B48]"
-        />
-
-        {isSearching && (
-          <TouchableOpacity onPress={() => setSearch("")}>
-            <Ionicons name="close-circle" size={20} color="#94A3B8" />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* SEARCH RESULTS */}
-      {isSearching && (
-        <View className="mb-8">
-          <Text className="text-lg font-bold text-[#1A2B48] mb-3">
-            Search Results
-          </Text>
-
-          {loadingTrips ? (
-            <ActivityIndicator color="#FF6D4D" />
-          ) : filteredTrips.length === 0 ? (
-            <Text className="text-[#94A3B8]">
-              No trips found
-            </Text>
-          ) : (
-            filteredTrips.map(trip => (
-              <TripCard key={trip.id} trip={trip} />
-            ))
+          {isSearching && (
+            <TouchableOpacity onPress={() => setSearch("")}>
+              <Ionicons name="close-circle" size={20} color="#E2E8F0" />
+            </TouchableOpacity>
           )}
         </View>
-      )}
 
-      {/* NORMAL HOME CONTENT */}
-      {!isSearching && (
-        <>
-          {/* BOOKING OPTIONS */}
-          <Text className="text-lg font-bold text-[#1A2B48] mb-4">
-            Book Your Journey
-          </Text>
-
-          <View className="flex-row justify-between mb-8">
-            <TouchableOpacity
-              onPress={() => openLink("https://www.booking.com")}
-              className="bg-white w-[48%] p-5 rounded-3xl border border-[#E2E8F0]"
-            >
-              <View className="bg-[#E0F2FE] p-3 rounded-full w-12 mb-4">
-                <Ionicons name="bed-outline" size={24} color="#0284C7" />
-              </View>
-
-              <Text className="text-lg font-bold text-[#1A2B48] mb-1">
-                Hotels
-              </Text>
-              <Text className="text-[#94A3B8] text-sm">
-                Find & book places to stay
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => openLink("https://www.skyscanner.com")}
-              className="bg-white w-[48%] p-5 rounded-3xl border border-[#E2E8F0]"
-            >
-              <View className="bg-[#FEF3C7] p-3 rounded-full w-12 mb-4">
-                <Ionicons name="airplane-outline" size={24} color="#D97706" />
-              </View>
-
-              <Text className="text-lg font-bold text-[#1A2B48] mb-1">
-                Flights
-              </Text>
-              <Text className="text-[#94A3B8] text-sm">
-                Compare & book flights
-              </Text>
-            </TouchableOpacity>
+        {isSearching ? (
+          <View>
+            <Text className="text-xl font-black text-[#1A2B48] mb-4">Results</Text>
+            {loadingTrips ? (
+              <ActivityIndicator color="#FF6D4D" />
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
+                {filteredTrips.map(trip => <TripCard key={trip.id} trip={trip} />)}
+              </ScrollView>
+            )}
           </View>
-
-          {/* POPULAR SITES */}
-          <Text className="text-lg font-bold text-[#1A2B48] mb-4">
-            Popular Booking Sites
-          </Text>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-8">
-            {[
-              {
-                name: "Booking.com",
-                img: "https://tse2.mm.bing.net/th/id/OIP.dFe-8ErBa9iL4iO0suQzOgHaHa?rs=1&pid=ImgDetMain&o=7&rm=3",
-                url: "https://www.booking.com"
-              },
-              {
-                name: "Agoda",
-                img: "https://tse1.mm.bing.net/th/id/OIP.i8tdTxifd0azaU6fH9roJQHaEH?rs=1&pid=ImgDetMain&o=7&rm=3",
-                url: "https://www.agoda.com"
-              },
-              {
-                name: "Google Flights",
-                img: "https://logowik.com/content/uploads/images/t_google-flight1670.jpg",
-                url: "https://www.google.com/flights"
-              }
-            ].map((item, index) => (
+        ) : (
+          <>
+            {/* QUICK BOOKING BOXES */}
+            <View className="flex-row justify-between mb-10">
               <TouchableOpacity
-                key={index}
-                onPress={() => openLink(item.url)}
-                className="mr-5 bg-white p-4 rounded-3xl border border-[#E2E8F0] shadow-sm items-center"
+                onPress={() => openLink("https://www.booking.com")}
+                className="bg-[#1A2B48] w-[48%] p-6 rounded-[32px] shadow-lg shadow-navy-900/20"
               >
-                <Image
-                  source={{ uri: item.img }}
-                  className="w-24 h-12 resize-contain mb-3"
-                />
-                <Text className="font-bold text-[#1A2B48]">
-                  {item.name}
-                </Text>
+                <Ionicons name="bed" size={24} color="#FF6D4D" />
+                <Text className="text-white font-black text-lg mt-3">Hotels</Text>
+                <Text className="text-white/50 text-[10px] font-bold uppercase tracking-tighter">Book a Stay</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
 
-          {/* UPCOMING TRIPS */}
-          <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-lg font-bold text-[#1A2B48]">
-              Upcoming Trips
-            </Text>
+              <TouchableOpacity
+                onPress={() => openLink("https://www.skyscanner.com")}
+                className="bg-white w-[48%] p-6 rounded-[32px] border border-gray-100 shadow-sm"
+              >
+                <Ionicons name="airplane" size={24} color="#FF6D4D" />
+                <Text className="text-[#1A2B48] font-black text-lg mt-3">Flights</Text>
+                <Text className="text-[#94A3B8] text-[10px] font-bold uppercase tracking-tighter">Sky Scanner</Text>
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              onPress={() => router.push("/(dashboard)/(tabs)/trip")}
-            >
-              <Text className="text-[#FF6D4D] font-bold">
-                See More
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {loadingTrips ? (
-            <ActivityIndicator color="#FF6D4D" />
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-8">
-              {upcomingTrips.length === 0 && (
-                <Text className="text-[#94A3B8] mt-4">
-                  No upcoming trips
-                </Text>
-              )}
-
-              {upcomingTrips.slice(0, 5).map(trip => (
-                <TripCard key={trip.id} trip={trip} />
+            {/* PARTNERS (HORIZONTAL LIST) */}
+            <Text className="text-[10px] font-black text-[#94A3B8] uppercase tracking-[3px] mb-4 ml-1">Partners</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-10">
+              {[
+                { name: "Booking", url: "https://www.booking.com", img: "https://tse2.mm.bing.net/th/id/OIP.dFe-8ErBa9iL4iO0suQzOgHaHa?rs=1&pid=ImgDetMain&o=7&rm=3" },
+                { name: "Agoda", url: "https://www.agoda.com", img: "https://tse1.mm.bing.net/th/id/OIP.i8tdTxifd0azaU6fH9roJQHaEH?rs=1&pid=ImgDetMain&o=7&rm=3" },
+                { name: "Google", url: "https://www.google.com/flights", img: "https://logowik.com/content/uploads/images/t_google-flight1670.jpg" }
+              ].map((item, idx) => (
+                <TouchableOpacity 
+                  key={idx} 
+                  onPress={() => openLink(item.url)}
+                  className="bg-white flex-row items-center px-4 py-3 rounded-2xl mr-3 border border-gray-50 shadow-sm"
+                >
+                  <Image source={{ uri: item.img }} className="w-6 h-6 rounded-md" />
+                  <Text className="ml-2 font-bold text-[#1A2B48] text-xs">{item.name}</Text>
+                </TouchableOpacity>
               ))}
             </ScrollView>
-          )}
 
-          {/* COMPLETED TRIPS */}
-          <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-lg font-bold text-[#1A2B48]">
-              Completed Trips
-            </Text>
+            {/* UPCOMING SECTION */}
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-xl font-black text-[#1A2B48]">Next Adventures</Text>
+              <TouchableOpacity onPress={() => router.push("/(dashboard)/(tabs)/trip")}>
+                <Ionicons name="arrow-forward" size={20} color="#FF6D4D" />
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              onPress={() => router.push("/(dashboard)/(tabs)/trip")}
-            >
-              <Text className="text-[#FF6D4D] font-bold">
-                See More
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-12">
-            {completedTrips.length === 0 && (
-              <Text className="text-[#94A3B8] mt-4">
-                No completed trips
-              </Text>
+            {loadingTrips ? (
+              <ActivityIndicator color="#FF6D4D" />
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-10 overflow-visible">
+                {upcomingTrips.length === 0 ? (
+                  <Text className="text-[#94A3B8] font-medium py-4">No plans yet...</Text>
+                ) : (
+                  upcomingTrips.slice(0, 5).map(trip => <TripCard key={trip.id} trip={trip} />)
+                )}
+              </ScrollView>
             )}
 
-            {completedTrips.slice(0, 5).map(trip => (
-              <TripCard key={trip.id} trip={trip} />
-            ))}
-          </ScrollView>
-        </>
-      )}
-    </ScrollView>
+            {/* COMPLETED SECTION */}
+            <Text className="text-xl font-black text-[#1A2B48] mb-4">Memories</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
+              {completedTrips.length === 0 ? (
+                <Text className="text-[#94A3B8] font-medium py-4">Safe travels!</Text>
+              ) : (
+                completedTrips.slice(0, 5).map(trip => <TripCard key={trip.id} trip={trip} />)
+              )}
+            </ScrollView>
+          </>
+        )}
+      </ScrollView>
+
+      {/* FLOATING ACTION BUTTON */}
+      {/* {!isSearching && (
+        <TouchableOpacity 
+            onPress={() => router.push("/(dashboard)/(tabs)/trip")}
+            className="absolute bottom-10 right-6 bg-[#FF6D4D] w-14 h-14 rounded-2xl items-center justify-center shadow-xl shadow-orange-500/40"
+        >
+            <Ionicons name="add" size={30} color="white" />
+        </TouchableOpacity>
+      )} */}
+    </View>
   )
 }

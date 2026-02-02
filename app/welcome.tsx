@@ -1,74 +1,104 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StatusBar, Image, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StatusBar, Image, Dimensions, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import LottieView from 'lottie-react-native'; 
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur'; 
 import '../global.css';
 
 const { width, height } = Dimensions.get('window');
 
 const WelcomeScreen = () => {
   return (
-    <View className="flex-1 bg-[#F8FAFC]">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-[#0F172A]">
+      <StatusBar barStyle="light-content" translucent />
 
-      {/* ------------------- LIVE BACKGROUND ------------------- */}
+      {/* 1. LIVE BACKGROUND */}
       <LottieView
-        source={require('@/assets/animations/planes.json')} // Add your Lottie animation file here
+        source={require('@/assets/animations/planes.json')} 
         autoPlay
         loop
-        style={{
-          position: 'absolute',
-          width,
-          height,
-          zIndex: -1
-        }}
+        speed={0.6}
+        style={StyleSheet.absoluteFillObject}
+        resizeMode="cover"
       />
 
-      {/* ------------------- CONTENT ------------------- */}
-      <View className="flex-1 justify-between px-8 py-12">
+      {/* 2. BACKGROUND OVERLAY */}
+      <LinearGradient
+        colors={['rgba(15, 23, 42, 0.2)', 'rgba(15, 23, 42, 0.8)']}
+        style={StyleSheet.absoluteFillObject}
+      />
 
-        {/* Top Section: Branding */}
-        <View className="mt-20 items-center">
-          {/* Logo */}
-          <Image
-            source={require('@/assets/images/vagaRoute_logo.png')} // Your VagaRoute logo
-            className="w-24 h-24 rounded-xl"
-            resizeMode="contain"
-          />
-
-          <Text className="text-4xl font-extrabold text-[#1A2B48] mt-6 tracking-tight">
-            VagaRoute
-          </Text>
-
-          <Text className="text-base text-[#94A3B8] text-center mt-4 leading-6 px-4">
-            Your journey, perfectly tailored. All your plans in one secure place.
-          </Text>
-        </View>
-
-        {/* Bottom Section: Actions */}
-        <View className="mb-10 w-full">
-          <TouchableOpacity 
-            className="bg-[#FF6D4D] py-5 rounded-2xl items-center shadow-lg shadow-[#FF6D4D]/30 mb-4"
-            activeOpacity={0.8}
-            onPress={() => router.push('/signup')}
+      {/* 3. CONTENT AREA */}
+      <View className="flex-1 justify-end items-center px-6 pb-12">
+        
+        {/* LARGE BUT REFINED GLASS CARD */}
+        <BlurView 
+          intensity={50} 
+          tint="dark" 
+          className="rounded-[45px] overflow-hidden border border-white/20 w-full"
+          style={{ height: height * 0.72 }} 
+        >
+          <LinearGradient
+            colors={['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.04)']}
+            className="flex-1 p-8 items-center justify-between"
           >
-            <Text className="text-white text-lg font-bold">Get Started</Text>
-          </TouchableOpacity>
+            {/* TOP SECTION - Now smaller and more centered */}
+            <View className="items-center mt-6">
+              <View className="bg-white/90 p-4 rounded-2xl shadow-lg mb-6">
+                <Image
+                  source={require('@/assets/images/vagaRoute_logo.png')}
+                  className="w-12 h-12" // Smaller Logo
+                  resizeMode="contain"
+                />
+              </View>
 
-          <TouchableOpacity 
-            className="py-4 items-center"
-            onPress={() => router.push('/login')}
-          >
-            <Text className="text-[#1A2B48] text-base font-semibold">
-              I already have an account
-            </Text>
-          </TouchableOpacity>
+              <Text className="text-3xl font-black text-white tracking-tight text-center">
+                VagaRoute
+              </Text>
+              
+              <View className="h-[2px] w-8 bg-[#FF6D4D] rounded-full my-4" />
 
-          <Text className="text-center text-[#94A3B8] text-xs mt-6">
-            Version 1.0.0
-          </Text>
-        </View>
+              <Text className="text-gray-300 text-center text-base font-medium leading-6 px-6">
+                Your journey,{"\n"}
+                <Text className="text-white font-bold italic">perfectly tailored.</Text>
+              </Text>
+            </View>
 
+            {/* BOTTOM SECTION - Separated from content */}
+            <View className="w-full mb-2">
+              {/* Added a View with margin to create "Distance" from the content above */}
+              <View className="mt-12 w-full"> 
+                <TouchableOpacity 
+                  activeOpacity={0.8}
+                  onPress={() => router.push('/signup')}
+                  className="bg-[#FF6D4D] py-4 rounded-2xl items-center shadow-lg shadow-orange-500/30 mb-4"
+                >
+                  <Text className="text-white text-base font-black uppercase tracking-widest">
+                    Get Started
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  activeOpacity={0.7}
+                  onPress={() => router.push('/login')}
+                  className="bg-white/5 border border-white/10 py-4 rounded-2xl items-center"
+                >
+                  <Text className="text-white/80 text-base font-bold">
+                    Sign In
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View className="items-center mt-8">
+                <Text className="text-white/20 text-[9px] font-bold tracking-[3px] uppercase">
+                  V 1.0.0 • Global Explorer
+                </Text>
+              </View>
+            </View>
+
+          </LinearGradient>
+        </BlurView>
       </View>
     </View>
   );

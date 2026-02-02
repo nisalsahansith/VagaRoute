@@ -6,9 +6,12 @@ import {
   Dimensions,
   Alert,
   TouchableOpacity,
-  FlatList
+  StatusBar,
+  SafeAreaView,
+  Platform,
+  ActivityIndicator
 } from "react-native"
-import MapView, { Marker, Polyline } from "react-native-maps"
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps"
 import * as Location from "expo-location"
 import * as Speech from "expo-speech"
 import { Ionicons } from "@expo/vector-icons"
@@ -30,7 +33,6 @@ export default function GPSNavigationScreen() {
   const [routeInfo, setRouteInfo] = useState<any>(null)
   const [isNavigating, setIsNavigating] = useState(false)
 
-  // ---------------- GPS TRACKING ----------------
   useEffect(() => {
     startTracking()
   }, [])
@@ -53,46 +55,39 @@ export default function GPSNavigationScreen() {
         const newRegion = {
           latitude,
           longitude,
-          latitudeDelta: isNavigating ? 0.005 : 0.01,
-          longitudeDelta: isNavigating ? 0.005 : 0.01
+          latitudeDelta: isNavigating ? 0.002 : 0.01, // Tighter zoom when moving
+          longitudeDelta: isNavigating ? 0.002 : 0.01
         }
 
         setUserLocation(newRegion)
-        setRegion(newRegion)
+        if (!isNavigating) setRegion(newRegion)
 
         if (mapRef.current && isNavigating) {
           mapRef.current.animateCamera({
             center: { latitude, longitude },
-            pitch: 60,
+            pitch: 65, // More aggressive tilt for 3D feel
             heading: heading || 0,
-            zoom: 18
-          })
+            zoom: 19
+          }, { duration: 1000 })
         }
       }
     )
   }
 
-  // ---------------- SELECT DESTINATION ----------------
   const selectDestination = async (e: any) => {
     if (isNavigating || !userLocation) return
-
     const { latitude, longitude } = e.nativeEvent.coordinate
     const dest = { latitude, longitude }
-
     setDestination(dest)
     setSteps([])
     setCurrentStepIndex(0)
     setRouteCoords([])
     setRouteInfo(null)
-
     await fetchRoute(userLocation, dest)
   }
 
-  // ---------------- FETCH ROUTE ----------------
   const fetchRoute = async (start: any, end: any) => {
     try {
-      console.log("Fetching route...")
-
       const url = `https://api.openrouteservice.org/v2/directions/driving-car/geojson`
       const res = await fetch(url, {
         method: "POST",
@@ -101,52 +96,44 @@ export default function GPSNavigationScreen() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          coordinates: [
-            [start.longitude, start.latitude],
-            [end.longitude, end.latitude]
-          ],
+          coordinates: [[start.longitude, start.latitude], [end.longitude, end.latitude]],
           instructions: true
         })
       })
 
       const data = await res.json()
-      console.log("Route data:", data)
-
       const feature = data.features[0]
-      const coords = feature.geometry.coordinates.map(
-        (p: number[]) => ({
-          latitude: p[1],
-          longitude: p[0]
-        })
-      )
-
-      const summary = feature.properties.summary
-      const instructions = feature.properties.segments[0].steps
+      const coords = feature.geometry.coordinates.map((p: number[]) => ({
+        latitude: p[1],
+        longitude: p[0]
+      }))
 
       setRouteCoords(coords)
-      setSteps(instructions)
+      setSteps(feature.properties.segments[0].steps)
       setRouteInfo({
-        distance: summary.distance / 1000,
-        duration: summary.duration / 60
+        distance: (feature.properties.summary.distance / 1000).toFixed(1),
+        duration: Math.ceil(feature.properties.summary.duration / 60)
       })
 
-      Speech.speak("Route ready. Press start to begin navigation.")
+      // Auto-fit the route on the screen
+      mapRef.current?.fitToCoordinates(coords, {
+        edgePadding: { top: 100, right: 50, bottom: 250, left: 50 },
+        animated: true,
+      })
+
+      Speech.speak("Route ready. Ready to start?")
     } catch (err) {
-      console.log("Route error:", err)
       Alert.alert("Error", "Failed to fetch route")
     }
   }
 
-  // ---------------- START NAVIGATION ----------------
   const startNavigation = () => {
     if (!routeCoords.length) return
-
     setIsNavigating(true)
     setCurrentStepIndex(0)
-    Speech.speak("Navigation started")
+    Speech.speak("Navigation started. Follow the orange path.")
   }
 
-  // ---------------- STOP NAVIGATION ----------------
   const stopNavigation = () => {
     setIsNavigating(false)
     setDestination(null)
@@ -156,158 +143,176 @@ export default function GPSNavigationScreen() {
     Speech.speak("Navigation ended")
   }
 
-  // ---------------- UI ----------------
-  if (!region) {
-    return (
-      <View style={styles.center}>
-        <Text>Starting GPS...</Text>
-      </View>
-    )
-  }
+  if (!region) return <View style={styles.center}><ActivityIndicator color="#FF6D4D" size="large" /></View>
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      
       <MapView
         ref={mapRef}
         style={styles.map}
-        region={region}
+        initialRegion={region}
         showsUserLocation
+        showsMyLocationButton={false}
         onPress={selectDestination}
       >
-        {destination && <Marker coordinate={destination} />}
+        {destination && (
+          <Marker coordinate={destination}>
+            <View style={styles.destMarker}>
+              <Ionicons name="location" size={34} color="#FF6D4D" />
+            </View>
+          </Marker>
+        )}
 
         {routeCoords.length > 0 && (
           <Polyline
             coordinates={routeCoords}
-            strokeWidth={5}
+            strokeWidth={6}
             strokeColor="#FF6D4D"
+            lineJoin="round"
           />
         )}
       </MapView>
 
-      {/* ROUTE INFO */}
-      {routeInfo && !isNavigating && (
-        <View style={styles.infoPanel}>
-          <Text style={styles.infoText}>
-            {routeInfo.distance.toFixed(1)} km
-          </Text>
-          <Text style={styles.infoText}>
-            {Math.ceil(routeInfo.duration)} min
-          </Text>
+      {/* TOP INSTRUCTION OVERLAY */}
+      <SafeAreaView style={styles.topContainer}>
+        {isNavigating && steps[currentStepIndex] ? (
+          <View style={styles.instructionCard}>
+            <View style={styles.directionIcon}>
+              <Ionicons name="navigate-circle" size={32} color="#FF6D4D" />
+            </View>
+            <Text style={styles.instructionText}>{steps[currentStepIndex].instruction}</Text>
+            <TouchableOpacity onPress={stopNavigation} style={styles.miniStop}>
+              <Ionicons name="close" size={20} color="#94A3B8" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          !isNavigating && (
+            <View style={styles.headerTitle}>
+              <Text style={styles.appName}>VagaRoute GPS</Text>
+            </View>
+          )
+        )}
+      </SafeAreaView>
+
+      {/* BOTTOM INFO SHEET */}
+      {routeInfo && (
+        <View style={styles.bottomSheet}>
+          <View style={styles.dragHandle} />
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>DISTANCE</Text>
+              <Text style={styles.statValue}>{routeInfo.distance} km</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>EST. TIME</Text>
+              <Text style={styles.statValue}>{routeInfo.duration} min</Text>
+            </View>
+          </View>
+
+          {!isNavigating ? (
+            <TouchableOpacity style={styles.primaryBtn} onPress={startNavigation}>
+              <Text style={styles.primaryBtnText}>Start Journey</Text>
+              <Ionicons name="arrow-forward" size={20} color="white" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: '#1A2B48' }]} onPress={stopNavigation}>
+              <Text style={styles.primaryBtnText}>End Navigation</Text>
+            </TouchableOpacity>
+          )}
         </View>
-      )}
-
-      {/* START BUTTON */}
-      {routeCoords.length > 0 && !isNavigating && (
-        <TouchableOpacity
-          style={styles.startButton}
-          onPress={startNavigation}
-        >
-          <Ionicons name="navigate" size={22} color="white" />
-          <Text style={styles.startText}>Start Navigation</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* CURRENT INSTRUCTION */}
-      {isNavigating && steps[currentStepIndex] && (
-        <View style={styles.instructionBox}>
-          <Ionicons name="navigate" size={20} color="#FF6D4D" />
-          <Text style={styles.instructionText}>
-            {steps[currentStepIndex].instruction}
-          </Text>
-        </View>
-      )}
-
-      {/* STOP */}
-      {isNavigating && (
-        <TouchableOpacity
-          style={styles.stopButton}
-          onPress={stopNavigation}
-        >
-          <Ionicons name="close" size={24} color="white" />
-        </TouchableOpacity>
       )}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#FFF' },
   map: { width, height },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center"
-  },
-
-  startButton: {
-    position: "absolute",
-    bottom: 30,
-    alignSelf: "center",
-    backgroundColor: "#FF6D4D",
-    paddingVertical: 14,
-    paddingHorizontal: 30,
-    borderRadius: 30,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    elevation: 6
-  },
-
-  startText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16
-  },
-
-  stopButton: {
-    position: "absolute",
-    top: 40,
-    right: 20,
-    backgroundColor: "#DC2626",
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 6
-  },
-
-  instructionBox: {
-    position: "absolute",
-    top: 40,
+  // Top Overlay
+  topContainer: {
+    position: 'absolute',
+    top: 10,
     left: 20,
-    right: 80,
-    backgroundColor: "#FFFFFF",
-    padding: 14,
-    borderRadius: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    elevation: 5
+    right: 20,
   },
-
-  instructionText: {
-    fontWeight: "bold",
-    color: "#1A2B48",
-    flex: 1
-  },
-
-  infoPanel: {
-    position: "absolute",
-    top: 40,
-    alignSelf: "center",
-    backgroundColor: "#FFFFFF",
+  headerTitle: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
     padding: 12,
-    borderRadius: 14,
-    flexDirection: "row",
-    gap: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
     elevation: 4
   },
+  appName: { fontWeight: '900', color: '#1A2B48', fontSize: 16, letterSpacing: 1 },
+  instructionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  directionIcon: { marginRight: 12 },
+  instructionText: { flex: 1, fontWeight: '700', color: '#1A2B48', fontSize: 15 },
+  miniStop: { padding: 5 },
 
-  infoText: {
-    fontWeight: "bold",
-    color: "#1A2B48"
+  // Bottom Sheet
+  bottomSheet: {
+    position: 'absolute',
+    bottom: 60,
+    width: '100%',
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 20,
+  },
+  dragHandle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 10,
+    alignSelf: 'center',
+    marginBottom: 15,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  statItem: { alignItems: 'center', flex: 1 },
+  statLabel: { fontSize: 10, fontWeight: '800', color: '#94A3B8', marginBottom: 4 },
+  statValue: { fontSize: 22, fontWeight: '900', color: '#1A2B48' },
+  statDivider: { width: 1, height: '100%', backgroundColor: '#F1F5F9' },
+
+  primaryBtn: {
+    backgroundColor: '#FF6D4D',
+    borderRadius: 18,
+    height: 60,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+  },
+  primaryBtnText: { color: 'white', fontWeight: '900', fontSize: 18 },
+  destMarker: {
+    shadowColor: '#FF6D4D',
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
   }
 })
