@@ -1,50 +1,66 @@
-# Welcome to your Expo app 👋
+# 🗺️ VagaRoute
+**Premium Smart Travel Planner & 3D Navigation**
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+VagaRoute is an all-in-one travel companion designed to simplify the journey from planning to arrival. Built with a clean "White Trip" aesthetic, it combines powerful itinerary management with high-precision GPS navigation.
 
-## Get started
+---
 
-1. Install dependencies
+## 📥 Download & Try
+Experience VagaRoute on your Android device. Download the latest build directly from our repository:
 
-   ```bash
-   npm install
-   ```
+👉 **[Download VagaRoute v1.0.0 APK](https://expo.dev/artifacts/eas/5vGY2UpSgN6WMCqfv9rm3a.apk)**
 
-2. Start the app
+> *Note: Since this is a developer build, you may need to allow "Installation from Unknown Sources" in your Android settings.*
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## ✨ Key Features
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 📍 Smart 3D Navigation
+* **Dynamic Camera:** 65-degree pitched 3D view for better orientation while driving or walking.
+* **Real-time Instructions:** Turn-by-turn voice and visual guidance powered by OpenRouteService.
+* **Auto-Recenter:** Intelligent tracking that keeps your location centered during movement.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 📅 Trip Timeline
+* **Chronological Planning:** Visual "Thread-line" UI to track flights, hotels, and dinner plans.
+* **Smart Icons:** Automatic icon assignment based on activity type (Flight ✈️, Hotel 🏨, Food 🍕).
+* **Location Integration:** Quick-view tags for all planned stops.
 
-## Get a fresh project
+### 💰 Expense & Budgeting
+* **Real-time Tracking:** Log expenses as they happen.
+* **Budget Overview:** Visual indicators to show remaining trip funds.
 
-When you're ready, run:
+---
 
+## 🛠️ Technical Stack
+
+| Category | Technology |
+| :--- | :--- |
+| **Framework** | [React Native](https://reactnative.dev/) + [Expo SDK 51+](https://expo.dev/) |
+| **Navigation** | [Expo Router](https://docs.expo.dev/router/introduction/) (File-based) |
+| **Maps** | [React Native Maps](https://github.com/react-native-maps/react-native-maps) (Google Maps SDK) |
+| **Routing API** | [OpenRouteService](https://openrouteservice.org/) |
+| **Styling** | [NativeWind](https://www.nativewind.dev/) (Tailwind CSS) |
+| **Persistence** | Firebase Firestore / Expo Secure Store |
+
+---
+
+## 🚀 Getting Started
+
+Follow these steps to set up the development environment on your local machine.
+
+### 1. Prerequisites
+* **Node.js:** v18.x or higher
+* **npm:** v9.x or higher
+* **Expo Go:** Installed on your physical device (iOS/Android)
+
+### 2. Installation
 ```bash
-npm run reset-project
-```
+# Clone the repository
+git clone [https://github.com/nisalsahan/VagaRoute.git](https://github.com/nisalsahan/VagaRoute.git)
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+# Enter project directory
+cd VagaRoute
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# Install dependencies
+npm install

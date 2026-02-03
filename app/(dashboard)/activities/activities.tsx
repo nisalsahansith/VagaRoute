@@ -8,7 +8,8 @@ import {
   Modal,
   Alert,
   TextInput,
-  StatusBar
+  StatusBar,
+  Platform
 } from "react-native"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { useLocalSearchParams, useRouter } from "expo-router"
@@ -42,7 +43,10 @@ export default function ActivitiesScreen() {
 
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showStartTimePicker, setShowStartTimePicker] = useState(false)
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false)
+
+  // Explicit color constants for consistency
+  const PLACEHOLDER_COLOR = "#94A3B8"
+  const TEXT_COLOR = "#1A2B48"
 
   useEffect(() => {
     if (!tripId) return
@@ -134,12 +138,11 @@ export default function ActivitiesScreen() {
       
       {/* HEADER */}
       <View className="pt-14 pb-6 px-6 bg-white flex-row justify-between items-center border-b border-gray-100 shadow-sm">
-        {/* UPDATED BACK BUTTON NAVIGATION */}
         <TouchableOpacity 
           onPress={() => router.push({ pathname: "/trips/details", params: { tripId: tripId } })}
           className="w-10 h-10 items-center justify-center rounded-full bg-gray-50"
         >
-          <Ionicons name="chevron-back" size={24} color="#1A2B48" />
+          <Ionicons name="chevron-back" size={24} color={TEXT_COLOR} />
         </TouchableOpacity>
 
         <View className="items-center">
@@ -161,7 +164,6 @@ export default function ActivitiesScreen() {
         ) : (
           activities.map((item, index) => (
             <View key={item.id} className="flex-row">
-              {/* TIMELINE THREAD */}
               <View className="items-center mr-4">
                 <View className="bg-[#1A2B48] w-10 h-10 rounded-2xl items-center justify-center z-10 shadow-md">
                   <Ionicons name={getActivityIcon(item.type || 'custom') as any} size={18} color="white" />
@@ -171,7 +173,6 @@ export default function ActivitiesScreen() {
                 )}
               </View>
 
-              {/* CARD */}
               <TouchableOpacity 
                 activeOpacity={0.8}
                 onPress={() => openEditModal(item)}
@@ -208,7 +209,7 @@ export default function ActivitiesScreen() {
       </ScrollView>
 
       {/* FORM MODAL */}
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
+      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setModalVisible(false)}>
         <View className="flex-1 bg-[#F8FAFC]">
           <View className="p-6 flex-row justify-between items-center bg-white border-b border-gray-100">
             <Text className="text-xl font-black text-[#1A2B48]">
@@ -223,40 +224,52 @@ export default function ActivitiesScreen() {
             <View className="space-y-4">
                 <TextInput
                     placeholder="Title (Flight, Hotel, Dinner...)"
+                    placeholderTextColor={PLACEHOLDER_COLOR}
                     value={title}
                     onChangeText={setTitle}
                     className="bg-white p-4 rounded-2xl border border-gray-100 font-bold text-[#1A2B48]"
                 />
                 <TextInput
                     placeholder="Type (flight, hotel, restaurant, custom)"
+                    placeholderTextColor={PLACEHOLDER_COLOR}
                     value={type}
                     onChangeText={t => setType(t as any)}
                     className="bg-white p-4 rounded-2xl border border-gray-100 font-bold text-[#1A2B48]"
                 />
+                
                 <View className="flex-row justify-between">
                     <TouchableOpacity onPress={() => setShowDatePicker(true)} className="bg-white p-4 rounded-2xl border border-gray-100 w-[48%] items-center">
                         <Ionicons name="calendar" size={18} color="#FF6D4D" />
-                        <Text className="text-[#1A2B48] font-bold mt-1">{date ? date.toDateString() : "Date"}</Text>
+                        <Text style={{ color: date ? TEXT_COLOR : PLACEHOLDER_COLOR }} className="font-bold mt-1">
+                          {date ? date.toDateString() : "Date"}
+                        </Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity onPress={() => setShowStartTimePicker(true)} className="bg-white p-4 rounded-2xl border border-gray-100 w-[48%] items-center">
                         <Ionicons name="time" size={18} color="#FF6D4D" />
-                        <Text className="text-[#1A2B48] font-bold mt-1">{startTime ? startTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "Start"}</Text>
+                        <Text style={{ color: startTime ? TEXT_COLOR : PLACEHOLDER_COLOR }} className="font-bold mt-1">
+                          {startTime ? startTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "Start"}
+                        </Text>
                     </TouchableOpacity>
                 </View>
+
                 <TextInput
                     placeholder="Location"
+                    placeholderTextColor={PLACEHOLDER_COLOR}
                     value={location}
                     onChangeText={setLocation}
                     className="bg-white p-4 rounded-2xl border border-gray-100 font-bold text-[#1A2B48]"
                 />
                 <TextInput
                     placeholder="Notes"
+                    placeholderTextColor={PLACEHOLDER_COLOR}
                     value={notes}
                     onChangeText={setNotes}
                     multiline
                     className="bg-white p-4 rounded-2xl border border-gray-100 h-24 font-medium text-[#1A2B48]"
                 />
             </View>
+
             <TouchableOpacity
                 onPress={saveActivity}
                 disabled={saving}
@@ -268,10 +281,20 @@ export default function ActivitiesScreen() {
         </View>
 
         {showDatePicker && (
-          <DateTimePicker value={date || new Date()} mode="date" display="default" onChange={(e, d) => { setShowDatePicker(false); if(d) setDate(d); }} />
+          <DateTimePicker 
+            value={date || new Date()} 
+            mode="date" 
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'} 
+            onChange={(e, d) => { setShowDatePicker(false); if(d) setDate(d); }} 
+          />
         )}
         {showStartTimePicker && (
-          <DateTimePicker value={startTime || new Date()} mode="time" display="default" onChange={(e, t) => { setShowStartTimePicker(false); if(t) setStartTime(t); }} />
+          <DateTimePicker 
+            value={startTime || new Date()} 
+            mode="time" 
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'} 
+            onChange={(e, t) => { setShowStartTimePicker(false); if(t) setStartTime(t); }} 
+          />
         )}
       </Modal>
     </View>
