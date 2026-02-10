@@ -8,7 +8,7 @@ VagaRoute is an all-in-one travel companion designed to simplify the journey fro
 ## 📥 Download & Try
 Experience VagaRoute on your Android device. Download the latest build directly from our repository:
 
-👉 **[Download VagaRoute v1.0.0 APK](https://expo.dev/artifacts/eas/5vGY2UpSgN6WMCqfv9rm3a.apk)**
+👉 **[Download VagaRoute v1.0.0 APK](https://expo.dev/artifacts/eas/feLHtSdwmZXyvRV2st5gRR.apk)**
 
 > *Note: Since this is a developer build, you may need to allow "Installation from Unknown Sources" in your Android settings.*
 
